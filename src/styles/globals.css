@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import "tailwindcss";
+@plugin '../hero.ts';
+@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+/* @custom-variant dark (&:is(.dark *)); */
+
+body {
+  width: 400px; /* Standard extension width */
+  height: 550px; /* Standard extension height */
+  margin: 0;
+  padding: 1%;
+  overflow: hidden; /* Prevents ugly double scrollbars */
+  /* background-color: #f8f0f3; */
+  color: #0072f5;
+  font-family: "Inter", sans-serif;
+}
+
+.brand-color {
+  color: #0072f5;
+}
+
+.color-picker-rounded {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.color-picker-rounded::-webkit-color-swatch {
+  border-radius: 50%;
+  border: 1px solid #e2e8f0; /* Subtle border so white colors don't disappear */
+}
+
+.color-picker-rounded::-webkit-color-swatch-wrapper {
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--color-zinc-950);
+  }
+} */

@@ -10,9 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroui/button": "^2.2.31",
+    "@heroui/dropdown": "^2.3.31",
+    "@heroui/switch": "^2.2.26",
+    "@heroui/system": "^2.4.27",
+    "@heroui/theme": "^2.4.26",
     "@tailwindcss/vite": "^4.2.1",
+    "framer-motion": "^12.34.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.13.1",
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
