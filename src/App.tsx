@@ -1,17 +1,15 @@
 import './App.css'
+import {useState} from "react";
+import visAccessMenu from "./visAccessMenu"
 
 function App() {
 
-    //const [numAds, setNumAds] = useState(0)
-    //const [numFacts, setNumFacts] = useState(0)
+    const [visAccess, setVisAccess] = useState(false)
 
-    //function incNumAds() {
-    //    setNumAds(numAds + 1)
-    //}
-
-    //function incNumFacts() {
-    //    setNumFacts(numFacts + 1)
-    //}
+    function showVisAccessMenu() {
+        console.log("Setting Vis Access")
+        setVisAccess(!visAccess)
+    }
 
     return (
         <>
@@ -100,13 +98,17 @@ function App() {
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-3"><h3
                             className="text-sm text-blue-900">Visual Accessibility</h3>
-                            <label className="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" value="" className="sr-only peer"/>
-                                <div
-                                    className="bg-gray-400 relative w-9 h-5 bg-neutral-quaternary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-soft dark:peer-focus:ring-brand-soft rounded-full peer peer-checked:bg-blue-500 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-buffer after:content-[''] after:absolute after:top-0.5 after:inset-s-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
-                            </label>
+                            <button onClick={showVisAccessMenu}
+                                    className="min-w-4 relative inline-flex items-center justify-center overflow-hidden text-sm font-medium text-heading rounded-base group bg-linear-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white hover:ring-1 hover:ring-cyan-300">
+                                <span
+                                    className=" relative px-1 py-1 transition-all ease-in duration-75 bg-neutral-primary-soft rounded-base group-hover:bg-transparent group-hover:dark:bg-transparent leading-5">
+                                {visAccess ? "Enabled" : "Disabled"}
+                                </span>
+                            </button>
+
                         </div>
                     </div>
+                    {visAccess ? visAccessMenu() : null}
                     <div className="mb-6"><h3 className="text-sm text-blue-900 mb-3">Session Metrics</h3>
                         <div className="space-y-2 p-4 bg-blue-50 rounded-lg">
                             <div className="flex justify-between items-center"><span className="text-sm text-gray-700">Ads Blocked</span><span
