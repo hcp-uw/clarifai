@@ -6,9 +6,9 @@
 
 body {
   width: 400px; /* Standard extension width */
-  height: 550px; /* Standard extension height */
+  height: auto; /* Standard extension height */
   margin: 0;
-  padding: 1%;
+  padding: 3%;
   overflow: hidden; /* Prevents ugly double scrollbars */
   /* background-color: #f8f0f3; */
   color: #0072f5;
