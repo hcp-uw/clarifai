@@ -26,7 +26,7 @@ function App() {
   const [fontColor, setFontColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [colorTheme, setColorTheme] = useState("light");
-  const [fontFamily, setFontFamily] = us  eState("Select Font Family");
+  const [fontFamily, setFontFamily] = useState("Select Font Family");
   const [fontSize, setFontSize] = useState("Select Font Size");
   const [activeTab, setActiveTab] = useState("features");
 
