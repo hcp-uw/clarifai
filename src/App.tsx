@@ -11,14 +11,12 @@ import {
 
 // ─── Helper: send a message to the active tab's content script ───────────────
 function sendToPage(msg: object) {
-  if (typeof chrome !== "undefined" && chrome.tabs) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
-      if (tabId !== undefined) {
-        chrome.tabs.sendMessage(tabId, msg);
-      }
-    });
-  }
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tabId = tabs[0]?.id;
+    if (tabId !== undefined) {
+      chrome.tabs.sendMessage(tabId, msg);
+    }
+  });
 }
 
 function App() {
@@ -34,9 +32,7 @@ function App() {
 
   function handleThemeChange(theme: string) {
     setColorTheme(theme);
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.set({ colorTheme: theme });
-    }
+    chrome.storage.local.set({ colorTheme: theme });
     sendToPage({ type: "SET_THEME", value: theme });
   }
 
@@ -50,18 +46,14 @@ function App() {
     };
     const font = fontMap[key] ?? key;
     setFontFamily(font);
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.set({ fontFamily: font });
-    }
+    chrome.storage.local.set({ fontFamily: font });
     sendToPage({ type: "SET_FONT_FAMILY", value: font });
   }
 
   function handleFontSize(key: string) {
     const size = key + "px";
     setFontSize(size);
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.set({ fontSize: size });
-    }
+    chrome.storage.local.set({ fontSize: size });
     sendToPage({ type: "SET_FONT_SIZE", value: size });
   }
 
@@ -71,25 +63,21 @@ function App() {
     setBgColor("#ffffff");
     setFontFamily("Select Font Family");
     setFontSize("Select Font Size");
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.clear();
-    }
+    chrome.storage.local.clear();
     sendToPage({ type: "RESET" });
   }
 
   useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.get(
-        ["colorTheme", "fontColor", "bgColor", "fontFamily", "fontSize"],
-        (saved) => {
-          if (saved.colorTheme) setColorTheme(saved.colorTheme as string);
-          if (saved.fontColor) setFontColor(saved.fontColor as string);
-          if (saved.bgColor) setBgColor(saved.bgColor as string);
-          if (saved.fontFamily) setFontFamily(saved.fontFamily as string);
-          if (saved.fontSize) setFontSize(saved.fontSize as string);
-        },
-      );
-    }
+    chrome.storage.local.get(
+      ["colorTheme", "fontColor", "bgColor", "fontFamily", "fontSize"],
+      (saved) => {
+        if (saved.colorTheme) setColorTheme(saved.colorTheme as string);
+        if (saved.fontColor) setFontColor(saved.fontColor as string);
+        if (saved.bgColor) setBgColor(saved.bgColor as string);
+        if (saved.fontFamily) setFontFamily(saved.fontFamily as string);
+        if (saved.fontSize) setFontSize(saved.fontSize as string);
+      },
+    );
   }, []);
 
   return (
@@ -101,8 +89,8 @@ function App() {
         <button
           onClick={() => setActiveTab("features")}
           className={`flex-1 py-2 text-sm font-medium transition-colors border-b-2 text-center ${activeTab === "features"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-600 hover:text-gray-800"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-600 hover:text-gray-800"
             }`}
         >
           Features
@@ -110,8 +98,8 @@ function App() {
         <button
           onClick={() => setActiveTab("accessibility")}
           className={`flex-1 py-2 text-sm font-medium transition-colors border-b-2 text-center ${activeTab === "accessibility"
-              ? "border-blue-500 text-blue-600"
-              : "border-transparent text-gray-600 hover:text-gray-800"
+            ? "border-blue-500 text-blue-600"
+            : "border-transparent text-gray-600 hover:text-gray-800"
             }`}
         >
           Settings
@@ -124,8 +112,8 @@ function App() {
             <button
               onClick={() => setFactChecking(!factChecking)}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${factChecking
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 bg-white hover:border-gray-400"
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-white hover:border-gray-400"
                 }`}
             >
               <div className="w-6 h-6">
@@ -139,8 +127,8 @@ function App() {
             <button
               onClick={() => setAdBlocker(!adBlocker)}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${adBlocker
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 bg-white hover:border-gray-400"
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-white hover:border-gray-400"
                 }`}
             >
               <div className="w-6 h-6">
@@ -154,8 +142,8 @@ function App() {
             <button
               onClick={() => setContentSummary(!contentSummary)}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${contentSummary
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 bg-white hover:border-gray-400"
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 bg-white hover:border-gray-400"
                 }`}
             >
               <div className="w-6 h-6">
@@ -243,8 +231,8 @@ function App() {
               <button
                 onClick={() => handleThemeChange("light")}
                 className={`flex-1 py-1 text-xs rounded transition-all ${colorTheme === "light"
-                    ? "border-2 border-blue-500 bg-white"
-                    : "border border-gray-300 bg-gray-50"
+                  ? "border-2 border-blue-500 bg-white"
+                  : "border border-gray-300 bg-gray-50"
                   }`}
               >
                 Light
@@ -252,8 +240,8 @@ function App() {
               <button
                 onClick={() => handleThemeChange("warm")}
                 className={`flex-1 py-1 text-xs rounded transition-all ${colorTheme === "warm"
-                    ? "border-2 border-blue-500 bg-amber-100"
-                    : "border border-gray-300 bg-gray-50"
+                  ? "border-2 border-blue-500 bg-amber-100"
+                  : "border border-gray-300 bg-gray-50"
                   }`}
               >
                 Warm
@@ -261,8 +249,8 @@ function App() {
               <button
                 onClick={() => handleThemeChange("dark")}
                 className={`flex-1 py-1 text-xs rounded transition-all ${colorTheme === "dark"
-                    ? "border-2 border-blue-500 bg-gray-900 text-white"
-                    : "border border-gray-300 bg-gray-50"
+                  ? "border-2 border-blue-500 bg-gray-900 text-white"
+                  : "border border-gray-300 bg-gray-50"
                   }`}
               >
                 Dark
@@ -278,9 +266,7 @@ function App() {
               value={fontColor}
               onChange={(e) => {
                 setFontColor(e.target.value);
-                if (typeof chrome !== "undefined" && chrome.storage) {
-                  chrome.storage.local.set({ fontColor: e.target.value });
-                }
+                chrome.storage.local.set({ fontColor: e.target.value });
                 sendToPage({ type: "SET_FONT_COLOR", value: e.target.value });
               }}
               className="color-picker-rounded w-8 h-8 cursor-pointer border border-gray-300 rounded"
@@ -295,9 +281,7 @@ function App() {
               value={bgColor}
               onChange={(e) => {
                 setBgColor(e.target.value);
-                if (typeof chrome !== "undefined" && chrome.storage) {
-                  chrome.storage.local.set({ bgColor: e.target.value });
-                }
+                chrome.storage.local.set({ bgColor: e.target.value });
                 sendToPage({ type: "SET_BG_COLOR", value: e.target.value });
               }}
               className="color-picker-rounded w-8 h-8 cursor-pointer border border-gray-300 rounded"
