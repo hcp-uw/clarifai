@@ -10,11 +10,15 @@ import {
 } from "@heroui/dropdown";
 
 // ─── Helper: send a message to the active tab's content script ───────────────
-function sendToPage(msg: object) {
+function sendToPage(msg: object, callback?: (response: any) => void) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tabId = tabs[0]?.id;
     if (tabId !== undefined) {
-      chrome.tabs.sendMessage(tabId, msg);
+      if (callback) {
+        chrome.tabs.sendMessage(tabId, msg, callback);
+      } else {
+        chrome.tabs.sendMessage(tabId, msg);
+      }
     }
   });
 }
@@ -23,6 +27,14 @@ function App() {
   const [factChecking, setFactChecking] = useState(false);
   const [adBlocker, setAdBlocker] = useState(false);
   const [contentSummary, setContentSummary] = useState(false);
+
+  const [loadingFactCheck, setLoadingFactCheck] = useState(false);
+  const [successFactCheck, setSuccessFactCheck] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [successSummary, setSuccessSummary] = useState(false);
+
+  const [stats, setStats] = useState({ ads: 0, factchecks: 0, summaries: 0 });
+
   const [fontColor, setFontColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [colorTheme, setColorTheme] = useState("light");
@@ -63,8 +75,34 @@ function App() {
     setBgColor("#ffffff");
     setFontFamily("Select Font Family");
     setFontSize("Select Font Size");
-    chrome.storage.local.clear();
+
+    setFactChecking(false);
+    setContentSummary(false);
+    setAdBlocker(false);
+
+    chrome.storage.local.get(null, (items) => {
+      const keysToRemove = Object.keys(items).filter(key => !key.startsWith('clarifai_cache_'));
+      chrome.storage.local.remove(keysToRemove);
+    });
+
     sendToPage({ type: "RESET" });
+  }
+
+  function handleResetCurrent() {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const url = tabs[0]?.url;
+      if (url) {
+        chrome.storage.local.remove([
+          `clarifai_cache_${url}`,
+          `toggle_factcheck_${url}`,
+          `toggle_summary_${url}`
+        ]);
+        setFactChecking(false);
+        setContentSummary(false);
+        sendToPage({ type: "HIDE_FACTCHECK" });
+        sendToPage({ type: "HIDE_SUMMARY" });
+      }
+    });
   }
 
   useEffect(() => {
@@ -78,6 +116,45 @@ function App() {
         if (saved.fontSize) setFontSize(saved.fontSize as string);
       },
     );
+
+    // Check active tab URL for toggle states and load global stats
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const url = tabs[0]?.url;
+      if (url) {
+        chrome.storage.local.get(
+          [`toggle_factcheck_${url}`, `toggle_summary_${url}`, 'stats_ads', 'stats_factchecks', 'stats_summaries'],
+          (saved: any) => {
+            if (saved[`toggle_factcheck_${url}`]) setFactChecking(true);
+            if (saved[`toggle_summary_${url}`]) setContentSummary(true);
+            setStats({
+              ads: saved.stats_ads || 0,
+              factchecks: saved.stats_factchecks || 0,
+              summaries: saved.stats_summaries || 0
+            });
+          }
+        );
+      } else {
+        chrome.storage.local.get(['stats_ads', 'stats_factchecks', 'stats_summaries'], (saved: any) => {
+          setStats({
+            ads: saved.stats_ads || 0,
+            factchecks: saved.stats_factchecks || 0,
+            summaries: saved.stats_summaries || 0
+          });
+        });
+      }
+    });
+
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'local') {
+        setStats(prev => ({
+          ads: changes.stats_ads !== undefined ? (changes.stats_ads.newValue as number) || 0 : prev.ads,
+          factchecks: changes.stats_factchecks !== undefined ? (changes.stats_factchecks.newValue as number) || 0 : prev.factchecks,
+          summaries: changes.stats_summaries !== undefined ? (changes.stats_summaries.newValue as number) || 0 : prev.summaries,
+        }));
+      }
+    };
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
   }, []);
 
   return (
@@ -113,15 +190,31 @@ function App() {
               onClick={() => {
                 const newValue = !factChecking;
                 setFactChecking(newValue);
-                sendToPage({ type: newValue ? "FACTCHECK_PAGE" : "REMOVE_FACTCHECK" });
+                if (newValue) {
+                  setLoadingFactCheck(true);
+                  sendToPage({ type: "SHOW_FACTCHECK" }, () => {
+                    setLoadingFactCheck(false);
+                    setSuccessFactCheck(true);
+                    setTimeout(() => setSuccessFactCheck(false), 800);
+                  });
+                } else {
+                  sendToPage({ type: "HIDE_FACTCHECK" });
+                }
               }}
+              disabled={loadingFactCheck || loadingSummary}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${factChecking
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300 bg-white hover:border-gray-400"
-                }`}
+                } ${loadingFactCheck || loadingSummary ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className="w-6 h-6">
-                <ShieldIcon />
+              <div className="w-6 h-6 flex items-center justify-center">
+                {loadingFactCheck ? (
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                ) : successFactCheck ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                ) : (
+                  <ShieldIcon />
+                )}
               </div>
               <span className="font-medium text-xs text-center leading-tight">
                 Fact Check
@@ -147,15 +240,31 @@ function App() {
               onClick={() => {
                 const newValue = !contentSummary;
                 setContentSummary(newValue);
-                sendToPage({ type: newValue ? "SUMMARIZE_PAGE" : "REMOVE_SUMMARY" });
+                if (newValue) {
+                  setLoadingSummary(true);
+                  sendToPage({ type: "SHOW_SUMMARY" }, () => {
+                    setLoadingSummary(false);
+                    setSuccessSummary(true);
+                    setTimeout(() => setSuccessSummary(false), 800);
+                  });
+                } else {
+                  sendToPage({ type: "HIDE_SUMMARY" });
+                }
               }}
+              disabled={loadingSummary || loadingFactCheck}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${contentSummary
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300 bg-white hover:border-gray-400"
-                }`}
+                } ${loadingSummary || loadingFactCheck ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className="w-6 h-6">
-                <DocumentIcon />
+              <div className="w-6 h-6 flex items-center justify-center">
+                {loadingSummary ? (
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                ) : successSummary ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                ) : (
+                  <DocumentIcon />
+                )}
               </div>
               <span className="font-medium text-xs text-center leading-tight">
                 Summary
@@ -165,15 +274,15 @@ function App() {
 
           <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200">
             <div className="flex flex-col items-center">
-              <span className="text-lg font-bold">0</span>
+              <span className="text-lg font-bold">{stats.ads}</span>
               <span className="text-xs text-gray-600">Ads Blocked</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-lg font-bold">0</span>
+              <span className="text-lg font-bold">{stats.factchecks}</span>
               <span className="text-xs text-gray-600">Fact Checks</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-lg font-bold">0</span>
+              <span className="text-lg font-bold">{stats.summaries}</span>
               <span className="text-xs text-gray-600">Summaries</span>
             </div>
           </div>
@@ -300,13 +409,21 @@ function App() {
 
       <div className="grow"></div>
 
-      {/* ── Reset Button ── */}
-      <Button
-        className="w-full mt-4 bg-gray-200 text-gray-800"
-        onPress={handleReset}
-      >
-        <ResetIcon /> Reset to Default
-      </Button>
+      {/* ── Reset Buttons ── */}
+      <div className="flex gap-2 mt-4 w-full">
+        <Button
+          className="flex-1 bg-red-100 text-red-700 text-xs"
+          onPress={handleResetCurrent}
+        >
+          Reset Site Data
+        </Button>
+        <Button
+          className="flex-1 bg-gray-200 text-gray-800 text-xs"
+          onPress={handleReset}
+        >
+          <ResetIcon /> Reset Settings
+        </Button>
+      </div>
     </div>
   );
 }
