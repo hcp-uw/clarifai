@@ -1,9 +1,4 @@
-/**
- * adblock.ts
- * Chrome extension content script — identifies and removes ads on page load.
- * Covers: known ad selectors, ad-serving iframes/scripts, and a MutationObserver
- * for dynamically injected ads.
- */
+/// <reference types="chrome" />
 
 // ---------------------------------------------------------------------------
 // Selectors — elements matching any of these are treated as ads and removed.
@@ -60,13 +55,7 @@ const AD_SELECTORS: string[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Remove a single element from the DOM and optionally collapse the space it
- * occupied so the page doesn't show an ugly blank region.
- */
 function removeElement(el: Element): void {
-    // Collapse the parent if it becomes empty after removal and looks like a
-    // pure ad wrapper (no meaningful text children).
     const parent = el.parentElement;
     el.remove();
 
@@ -80,10 +69,6 @@ function removeElement(el: Element): void {
     }
 }
 
-/**
- * Run all selectors against a root element (or the document) and remove hits.
- * Returns the number of elements removed.
- */
 function purgeAds(root: Document | Element = document): number {
     const combined = AD_SELECTORS.join(",");
     const hits = Array.from(root.querySelectorAll(combined));
@@ -92,16 +77,8 @@ function purgeAds(root: Document | Element = document): number {
 }
 
 // ---------------------------------------------------------------------------
-// Initial sweep — runs as soon as the content script is injected
-// ---------------------------------------------------------------------------
-const initialCount = purgeAds();
-if (initialCount > 0) {
-    console.debug(`[adblock] Removed ${initialCount} ad element(s) on load.`);
-}
-
-// ---------------------------------------------------------------------------
-// MutationObserver — catches ads injected after initial page load
-// (lazy-loaded content, infinite scroll, single-page app navigation, etc.)
+// MutationObserver — declared before the message listener and storage check
+// so both can safely reference it.
 // ---------------------------------------------------------------------------
 const observer = new MutationObserver((mutations: MutationRecord[]) => {
     let removed = 0;
@@ -110,7 +87,6 @@ const observer = new MutationObserver((mutations: MutationRecord[]) => {
         for (const node of Array.from(mutation.addedNodes)) {
             if (!(node instanceof Element)) continue;
 
-            // Check the node itself
             const combined = AD_SELECTORS.join(",");
             if (node.matches(combined)) {
                 removeElement(node);
@@ -118,7 +94,6 @@ const observer = new MutationObserver((mutations: MutationRecord[]) => {
                 continue;
             }
 
-            // Check descendants of the added node
             removed += purgeAds(node);
         }
     }
@@ -128,10 +103,28 @@ const observer = new MutationObserver((mutations: MutationRecord[]) => {
     }
 });
 
-observer.observe(document.documentElement, {
-    childList: true,  // watch for added/removed children
-    subtree: true,    // recurse into all descendants
+// ---------------------------------------------------------------------------
+// Initial sweep on page load
+// ---------------------------------------------------------------------------
+chrome.storage.local.get("adBlocker", (data: any) => {
+    if (!data.adBlocker) return;
+    purgeAds();
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 });
 
-// Clean up the observer if the page is unloaded (good practice for SPAs)
+// ---------------------------------------------------------------------------
+// Message listener — enable/disable from the popup
+// ---------------------------------------------------------------------------
+chrome.runtime.onMessage.addListener((msg: any) => {
+    if (msg.type === "ENABLE_ADBLOCK") {
+        purgeAds();
+        console.debug(`[adblock] Enabled.`);
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    } else if (msg.type === "DISABLE_ADBLOCK") {
+        observer.disconnect();
+        console.debug("[adblock] Disabled.");
+    }
+});
+
+// Clean up on unload
 window.addEventListener("unload", () => observer.disconnect());
