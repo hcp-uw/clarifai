@@ -85,6 +85,26 @@ chrome.runtime.onMessage.addListener((msg) => {
     style.textContent += `${TEXT_SELECTOR} { font-size: ${msg.value} !important; }`;
   }
 
+  if (msg.type === "SUMMARIZE_PAGE") {
+    const text = Array.from(document.querySelectorAll("p"))
+      .map((p) => p.innerText)
+      .join("\n");
+
+    console.log("Here at Summarize")
+
+    chrome.runtime.sendMessage(
+      { type: "SUMMARIZE_PAGE", text },
+      (response) => {
+        console.log("Summary API Response:", response.data);
+      }
+    );
+  }
+
+  if (msg.type === "REMOVE_SUMMARY") {
+    // Logic to clear/hide summary goes here
+    console.log("Summary removed");
+  }
+
   if (msg.type === "RESET") {
     const existing = document.getElementById(STYLE_ID);
     if (existing) existing.remove();
@@ -101,6 +121,43 @@ chrome.runtime.onMessage.addListener((msg) => {
     document.body.style.color = originalStyles.color;
     document.body.style.fontFamily = originalStyles.fontFamily;
     document.body.style.fontSize = originalStyles.fontSize;
+  }
+
+  if (msg.type === "FACTCHECK_PAGE") {
+    console.log("Here at Factcheck");
+    const paragraphs = Array.from(document.querySelectorAll("p"))
+      .filter(p => p.innerText.trim().length > 100); // skip short ones
+
+    const texts = paragraphs.map((p, i) => ({ index: i, text: p.innerText }));
+
+    chrome.runtime.sendMessage(
+      { type: "FACTCHECK_PAGE", paragraphs: texts },
+      (response) => {
+        if (!response.success) return;
+
+        response.data.flagged.forEach(({ index, reason }) => {
+          const box = document.createElement("div");
+          box.className = "clarifai-factcheck-box";
+          box.style.cssText = `
+          background: #fff8e1;
+          border-left: 3px solid #f5a623;
+          padding: 8px 12px;
+          margin-bottom: 4px;
+          font-size: 14px;
+          font-family: sans-serif;
+          color: #333;
+          border-radius: 4px;
+        `;
+          box.innerText = "⚠️ " + reason;
+
+          paragraphs[index].insertAdjacentElement("beforebegin", box);
+        });
+      }
+    );
+  }
+
+  if (msg.type === "REMOVE_FACTCHECK") {
+    document.querySelectorAll('.clarifai-factcheck-box').forEach(el => el.remove());
   }
 });
 

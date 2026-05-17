@@ -110,7 +110,11 @@ function App() {
         <div className="space-y-4 min-h-48">
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={() => setFactChecking(!factChecking)}
+              onClick={() => {
+                const newValue = !factChecking;
+                setFactChecking(newValue);
+                sendToPage({ type: newValue ? "FACTCHECK_PAGE" : "REMOVE_FACTCHECK" });
+              }}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${factChecking
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300 bg-white hover:border-gray-400"
@@ -140,7 +144,11 @@ function App() {
             </button>
 
             <button
-              onClick={() => setContentSummary(!contentSummary)}
+              onClick={() => {
+                const newValue = !contentSummary;
+                setContentSummary(newValue);
+                sendToPage({ type: newValue ? "SUMMARIZE_PAGE" : "REMOVE_SUMMARY" });
+              }}
               className={`py-3 px-3 rounded-lg border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${contentSummary
                 ? "border-blue-500 bg-blue-50"
                 : "border-gray-300 bg-white hover:border-gray-400"
