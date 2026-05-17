@@ -29,7 +29,14 @@
         "<all_urls>"
       ],
       "js": [
-        "content.js",
+        "content.js"
+      ]
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
         "adblock.js"
       ],
       "run_at": "document_start"
