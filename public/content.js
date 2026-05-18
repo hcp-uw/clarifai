@@ -65,7 +65,7 @@ const renderSummary = (summaryText) => {
     padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #334155; line-height: 1.5; font-size: 15px;
-    position: relative; z-index: 999999;
+    position: relative; z-index: 1;
   `;
   banner.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -110,7 +110,7 @@ const renderFactCheck = (flaggedData) => {
     const warningIcon = document.createElement("span");
     warningIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
     const title = document.createElement("span");
-    title.textContent = "Fact Check: Incorrect Information";
+    title.textContent = "Potentially Biased Information";
     title.style.cssText = "font-weight: 600; font-size: 15px; color: #1a1a2e;";
     headerLeft.appendChild(warningIcon);
     headerLeft.appendChild(title);
